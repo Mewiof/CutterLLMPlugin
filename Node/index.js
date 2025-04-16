@@ -34,7 +34,21 @@
 	const model = args[1];
 	const code = args[2];
 
+	const FETCH_TIMEOUT = 60 * 1000;
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => {
+		controller.abort();
+	}, FETCH_TIMEOUT);
+
 	try {
+		const prompt = `You are a code conversion tool. Your ONLY task is to make the following disassembled code readable without altering its logic.
+INPUT CODE:
+\`\`\`cpp
+${code}
+\`\`\`
+
+OUTPUT ONLY the resulting C++ code.
+Do NOT include ANY introductions, explanations, notes, or markdown code fences like \`\`\`cpp or \`\`\`.`;
 		const response = await fetch("https://openrouter.ai/api/v1/completions", {
 			method: "POST",
 			headers: {
@@ -43,15 +57,18 @@
 			},
 			body: JSON.stringify({
 				model: model,
-				prompt: `Make the following disassembled code readable:\n\`\`\`cpp\n${code}\n\`\`\`\n\nOutput only the resulting code.`,
+				prompt: prompt,
 			}),
+			signal: controller.signal,
 		});
+		clearTimeout(timeoutId);
 		if (response.status !== 200) throw new Error(response.statusText);
 		const data = await response.json();
 		if (data.choices[0].finish_reason !== "stop" || data.choices[0].native_finish_reason !== "stop") throw new Error("Did not finish");
-		// trim "```cpp"/"```"
+		// trim "```cpp"/"```" (just in case)
 		console.log(data.choices[0].text.trim().TrimStart("```cpp").TrimStart("```c").TrimStart("```").TrimEnd("```").trim());
 	} catch (e) {
+		clearTimeout(timeoutId);
 		LogError(e);
 	}
 })();

@@ -46,7 +46,7 @@ class LLMPluginWidget(cutter.CutterDockWidget):
 		# -- Model Input --
 		model_label = QLabel("Model:", self)
 		self._model_input = QLineEdit(self)
-		self._model_input.setPlaceholderText("meta-llama/llama-4-maverick")
+		self._model_input.setPlaceholderText("anthropic/claude-3.7-sonnet:thinking")
 		self._model_input.setText(self._model_input.placeholderText())
 		layout.addWidget(model_label)
 		layout.addWidget(self._model_input)
